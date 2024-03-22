@@ -1,6 +1,3 @@
-import json
-import os
-import sys
 import boto3
 import streamlit as st
 
@@ -11,13 +8,12 @@ from langchain.llms.bedrock import Bedrock
 
 ## Data Ingestion
 
-import numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 
 ## Vector Embedding And Vectore Store
 
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 
 ## LLM Models
 
@@ -35,7 +31,7 @@ def data_ingestion():
     loader = PyPDFDirectoryLoader("data")
     documents = loader.load()
 
-    text_splitter = RecursiveCharacterTextSplitter(chuck_size=10000, chunk_overlap=1000)
+    text_splitter = RecursiveCharacterTextSplitter()
     docs = text_splitter.split_documents(documents)
     return docs
 
@@ -47,10 +43,10 @@ def get_vector_store(docs):
     vectorstore_faiss.save_local("faiss_index")
 
 
-## create the Anthropic Model
-def get_claude_llm():
-    llm = Bedrock(model_id="anthropic.claude-v2:1", client=bedrock, model_kwargs={'maxTokens': 512})
-    return llm
+# ## create the Anthropic Model
+# def get_claude_llm():
+#     llm = Bedrock(model_id="anthropic.claude-v2:1", client=bedrock, model_kwargs={'maxTokens': 512})
+#     return llm
 
 
 ## create the Meta Model
@@ -100,9 +96,20 @@ def main():
                 get_vector_store(docs)
                 st.success("Done")
 
-        if st.button("Claude Output"):
-            with st.spinner("Processing..."):
-                faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings)
-                llm = get_claude_llm()
+    # if st.button("Claude Output"):
+    #     with st.spinner("Processing..."):
+    #         faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings)
+    #         llm = get_claude_llm()
+    #
+    #         st.write(get_response_llm(llm, faiss_index, user_question))
 
-                st.write(get_response_llm(llm, faiss_index, user_question))
+    if st.button("Llama2 Output"):
+        with st.spinner("Processing..."):
+            faiss_index = FAISS.load_local("faiss_index", bedrock_embeddings, allow_dangerous_deserialization=True)
+            llm = get_llama2_llm()
+
+            st.write(get_response_llm(llm, faiss_index, user_question))
+
+
+if __name__ == '__main__':
+    main()
